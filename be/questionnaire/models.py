@@ -7,7 +7,12 @@ from user.models import CustomUser
 
 class Category(models.Model):
     name = models.CharField(blank=False, max_length=100)
-    max_field = models.IntegerField(blank=False)
+    max_field = models.IntegerField(blank=False, default=1)
+    current_field = models.IntegerField(blank=False,default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    started_at = models.DateTimeField(blank=False)
+    ended_at = models.DateTimeField(blank=False)
 
     def __str__(self):
         return self.name
@@ -39,6 +44,7 @@ class VotedField(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     voted_time = models.DateTimeField(auto_now=True)
+    is_voted = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.category)
