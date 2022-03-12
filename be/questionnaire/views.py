@@ -9,13 +9,15 @@ from questionnaire.request_utils import check_add_category_request, check_add_fi
 from questionnaire.serializers import MyFieldSerializer
 from django.core.exceptions import ObjectDoesNotExist
 
+from questionnaire.utils import get_winners
+
 # Create your views here.
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_category(request):
-    if not request.user.is_superuser:
+    if not request.user.is_admin:
         return response_400("you can't create category")
 
     if not check_add_category_request(request.data):
@@ -42,10 +44,10 @@ def add_category(request):
     return response_200("success", None)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_field(request):
-    if not request.user.is_superuser:
+    if not request.user.is_admin:
         return response_400("you can't create category")
 
     if not check_add_field_request(request.data):
@@ -73,10 +75,10 @@ def add_field(request):
     return response_200("success", None)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def edit_category(request):
-    if not request.user.is_superuser:
+    if not request.user.is_admin:
         return response_400("you can't create category")
 
     category_name = request.data.get("category_name")
@@ -100,10 +102,10 @@ def edit_category(request):
     return response_200("success", None)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def edit_field(request):
-    if not request.user.is_superuser:
+    if not request.user.is_admin:
         return response_400("you can't create category")
 
     field_name = request.data.get("field_name")
@@ -137,10 +139,10 @@ def edit_field(request):
     return response_200("success", None)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def remove_category(request):
-    if not request.user.is_superuser:
+    if not request.user.is_admin:
         return response_400("you can't create category")
 
     category_name = request.data.get("category_name")
@@ -155,10 +157,10 @@ def remove_category(request):
     return response_200("success", None)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def remove_field(request):
-    if not request.user.is_superuser:
+    if not request.user.is_admin:
         return response_400("you can't create category")
 
     field_name = request.data.get("field_name")
@@ -181,7 +183,7 @@ def remove_field(request):
     return response_200("success", None)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_all_current_categories(request):
     categories_obj = Category.objects.all()
@@ -199,7 +201,7 @@ def get_all_current_categories(request):
     return response_200("success", list)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_all_categories(request):
     categories_obj = Category.objects.all()
@@ -214,7 +216,7 @@ def get_all_categories(request):
     return response_200("success", list)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def vote_field(request):
     field_name = request.data.get("field_name")
@@ -245,3 +247,22 @@ def vote_field(request):
         field_obj.save()
 
     return response_200("success", None)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def winners(request):
+    request_year = request.data.get("year")
+    categories_obj = Category.objects.all()
+    my_list=[]
+    for category_obj in categories_obj:
+        category_date=datetime.datetime.strptime(category_obj.started_at,"%Y-%m-%d %H:%M:%S")
+        if category_date.year == request_year:
+            fields_obj = Field.objects.filter(category=category_obj)
+            winner = get_winners(fields_obj)
+            if len(winner)!=1:
+                return response_400("not a winner")
+            serializer = MyFieldSerializer(winner,many=False)
+            my_list.append(serializer.data)
+    return response_200("success",my_list)

@@ -13,7 +13,7 @@ from user.request_utils import check_register_request
 # Create your views here.
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 @permission_classes([AllowAny])
 def register_or_login(request):
     if not check_register_request(request.data):
